@@ -31,6 +31,70 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         for (int i = 0; i < MAX_BIRDS; i++) {
+
+            // Cohésion
+            Vector2 center_of_mass = {0, 0};
+            int birds_in_sight = 0;
+            float cohesion_radius = 120.0;
+
+            // Séparation
+            Vector2 separation = {0, 0};
+            int birds_too_close = 0;
+            float separation_radius = 40.0;
+
+            for (int j = 0; j < MAX_BIRDS; j++) {
+                if (i != j) {
+                    float dx = flock[i].pos.x - flock[j].pos.x;
+                    float dy = flock[i].pos.y - flock[j].pos.y;
+                    float dist = sqrtf(dx*dx + dy*dy);
+
+                    // Séparation
+                    if (dist < separation_radius && dist > 0) {
+                        separation.x += dx / dist;
+                        separation.y += dy / dist;
+                        birds_too_close++;
+                    }
+
+                    // Cohésion
+                    if (dist < cohesion_radius && dist > 0) {
+                        center_of_mass.x += flock[j].pos.x;
+                        center_of_mass.y += flock[j].pos.y;
+                        birds_in_sight++;
+                    }
+                }
+            }
+
+            // Application des forces
+
+            // Séparation
+            if (birds_too_close > 0) {
+                separation.x /= birds_too_close;
+                separation.y /= birds_too_close;
+
+                flock[i].vel.x += separation.x * 0.5;
+                flock[i].vel.y += separation.y * 0.5;
+            }
+
+            // Attraction
+            if (birds_in_sight > 0) {
+                center_of_mass.x /= birds_in_sight;
+                center_of_mass.y /= birds_in_sight;
+
+                Vector2 cohesion = {
+                    center_of_mass.x - flock[i].pos.x,
+                    center_of_mass.y - flock[i].pos.y
+                };
+
+                flock[i].vel.x += cohesion.x * 0.005;
+                flock[i].vel.y += cohesion.y * 0.005;
+            }
+
+            float curr_speed = sqrtf(flock[i].vel.x * flock[i].vel.x + flock[i].vel.y * flock[i].vel.y);
+            if (curr_speed > 0) {
+                flock[i].vel.x = (flock[i].vel.x / curr_speed) * flock[i].speed;
+                flock[i].vel.y = (flock[i].vel.y / curr_speed) * flock[i].speed;
+            }
+
             flock[i].pos.x += flock[i].vel.x;
             flock[i].pos.y += flock[i].vel.y;
 
