@@ -36,6 +36,13 @@ int main(void) {
     float separation_radius = 40.0;
     float cohesion_radius = 120.0;
     float separation_force = 0.5;
+    float alignement_force = 0.05;
+
+    // Couleurs
+    Color solBackground = {253, 246, 225, 255};
+    Color solPanel = {238, 232, 213, 220};
+    Color solText = {101, 123, 131, 255};
+    Color solBirds = {38, 139, 210, 255};
 
 
     while (!WindowShouldClose()) {
@@ -45,11 +52,19 @@ int main(void) {
             int birds_in_sight = 0;
             Vector2 separation = {0, 0};
             int birds_too_close = 0;
+            Vector2 alignement = {0, 0};
 
             for (int j = 0; j < MAX_BIRDS; j++) {
                 if (i != j) {
                     float dx = flock[i].pos.x - flock[j].pos.x;
                     float dy = flock[i].pos.y - flock[j].pos.y;
+
+                    if (dx > SCREEN_WIDTH / 2.0) dx -= SCREEN_WIDTH;
+                    else if (dx < -SCREEN_WIDTH / 2.0) dx += SCREEN_WIDTH;
+
+                    if (dy > SCREEN_HEIGHT / 2.0) dy -= SCREEN_HEIGHT;
+                    else if (dy < -SCREEN_HEIGHT / 2.0) dx += SCREEN_HEIGHT;
+
                     float dist = sqrtf(dx*dx + dy*dy);
 
                     // Séparation
@@ -64,6 +79,10 @@ int main(void) {
                         center_of_mass.x += flock[j].pos.x;
                         center_of_mass.y += flock[j].pos.y;
                         birds_in_sight++;
+
+                        // Alignement
+                        alignement.x += flock[j].vel.x;
+                        alignement.y += flock[j].vel.y;
                     }
                 }
             }
@@ -91,6 +110,15 @@ int main(void) {
 
                 flock[i].vel.x += cohesion.x * 0.005;
                 flock[i].vel.y += cohesion.y * 0.005;
+
+                // Alignement
+                alignement.x /= birds_in_sight;
+                alignement.y /= birds_in_sight;
+                flock[i].vel.x += alignement.x * alignement_force;
+                flock[i].vel.y += alignement.y * alignement_force;
+
+
+
             }
 
             float curr_speed = sqrtf(flock[i].vel.x * flock[i].vel.x + flock[i].vel.y * flock[i].vel.y);
@@ -103,33 +131,32 @@ int main(void) {
             flock[i].pos.y += flock[i].vel.y;
 
             // WALLS
-            if (flock[i].pos.x > SCREEN_WIDTH) {
-                flock[i].pos.x -= SCREEN_WIDTH;
-            }
-            if (flock[i].pos.y > SCREEN_HEIGHT) {
-                flock[i].pos.y -= SCREEN_HEIGHT;
-            }
             if (flock[i].pos.x < 0) {
-                flock[i].pos.x += SCREEN_WIDTH;
+                flock[i].pos.x = SCREEN_WIDTH;
+            } else if (flock[i].pos.x > SCREEN_WIDTH) {
+                flock[i].pos.x = 0;
             }
+
             if (flock[i].pos.y < 0) {
-                flock[i].pos.y += SCREEN_HEIGHT;
+                flock[i].pos.y = SCREEN_HEIGHT;
+            } else if (flock[i].pos.y > SCREEN_HEIGHT) {
+                flock[i].pos.y = 0;
             }
 
         }
 
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(solBackground);
 
         // Dessin oiseau
         for (int i = 0; i < MAX_BIRDS; i++) {
             float angle = atan2f(flock[i].vel.y, flock[i].vel.x) * RAD2DEG + 90;
-            DrawPoly(flock[i].pos, 3, 12, angle, SKYBLUE);
+            DrawPoly(flock[i].pos, 3, 12, angle, solBirds);
         }
 
         // Dessin GUI
-        DrawRectangle(10, 10, 250, 150, Fade(LIGHTGRAY, 0.8));
-        DrawText("Paramètres", 20, 20, 10, DARKGRAY);
+        DrawRectangle(10, 10, 250, 150, Fade(solPanel, 0.8));
+        DrawText("Paramètres", 20, 20, 10, solText);
 
         GuiSliderBar((Rectangle){110, 50, 100, 15}, "Rayon de séparation",
                      TextFormat("0.0", separation_radius), &separation_radius,
@@ -140,6 +167,9 @@ int main(void) {
         GuiSliderBar((Rectangle){110, 110, 100, 15}, "Force esquive",
                      TextFormat("0.2", separation_force), &separation_force,
                      0.1, 2.0);
+        GuiSliderBar((Rectangle){110, 140, 100, 15}, "Force alignement",
+                     TextFormat("0.3", alignement_force), &alignement_force,
+                     0.01, 0.2);
 
 
         EndDrawing();
