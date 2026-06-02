@@ -2,8 +2,6 @@
 
 Une simulation de nuée interactive (Flocking) basée sur l'algorithme des Boids de Craig Reynolds, écrite en C pur et propulsée par Raylib. 
 
-![Aperçu de la simulation](https://via.placeholder.com/800x450.png?text=Ajoute+une+capture+d'ecran+de+ta+nuee+ici)
-
 ## 🌟 Fonctionnalités
 
 La simulation repose sur la combinaison vectorielle de trois règles simples appliquées à chaque entité, générant un comportement de groupe complexe et organique :
